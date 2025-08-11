@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pastelaria Delícia - Cardápio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap");
+
+      body {
+        font-family: "Poppins", sans-serif;
+        background-color: #fef6e4;
+      }
+
+      .menu-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .admin-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 100;
+      }
+
+      .hero-img {
+        background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+          url("https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/1b6e1de0-0c19-441d-81cb-5d55d259dd4b.png");
+        background-size: cover;
+        background-position: center;
+      }
+
+      .address-card {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(5px);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Área do Administrador (inicialmente oculta) -->
+    <div
+      id="adminArea"
+      class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4"
+    >
+      <div class="bg-white rounded-lg p-6 max-w-md w-full">
+        <h2 class="text-2xl font-bold mb-4 text-center">
+          Painel do Administrador
+        </h2>
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-1">Senha</label>
+          <input
+            type="password"
+            id="adminPassword"
+            class="w-full p-2 border rounded"
+          />
+        </div>
+        <div id="adminPanel" class="hidden">
+          <div class="mb-4 grid grid-cols-3 gap-3">
+            <button
+              onclick="showAddForm('pastel')"
+              class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+              Adicionar Pastel
+            </button>
+            <button
+              onclick="showAddForm('porcao')"
+              class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+            >
+              Adicionar Porção
+            </button>
+            <button
+              onclick="showAddForm('bebida')"
+              class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+            >
+              Adicionar Bebida
+            </button>
+          </div>
+          <button
+            onclick="enterRemoveMode()"
+            class="w-full bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 mb-4"
+          >
+            ${removeMode ? 'Sair' : 'Entrar'} no Modo Remoção
+          </button>
+          <div id="addItemForm" class="hidden mb-4">
+            <input
+              type="text"
+              id="itemName"
+              placeholder="Nome"
+              class="w-full p-2 border rounded mb-2"
+            />
+            <input
+              type="text"
+              id="itemDesc"
+              placeholder="Descrição"
+              class="w-full p-2 border rounded mb-2"
+            />
+            <input
+              type="text"
+              id="itemPrice"
+              placeholder="Preço (R$)"
+              class="w-full p-2 border rounded mb-2"
+            />
+            <input
+              type="text"
+              id="itemImg"
+              placeholder="URL da Imagem"
+              class="w-full p-2 border rounded mb-2"
+            />
+            <input type="hidden" id="itemType" />
+            <button
+              onclick="addMenuItem()"
+              class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 w-full"
+            >
+              Salvar
+            </button>
+          </div>
+        </div>
+        <div class="flex gap-2 justify-center">
+          <button
+            onclick="loginAdmin()"
+            class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700"
+          >
+            Entrar
+          </button>
+          <button
+            onclick="hideAdminArea()"
+            class="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header
+      class="hero-img h-96 flex items-center justify-center text-white relative overflow-hidden"
+    >
+      <div class="text-center z-10 px-4 animate__animated animate__fadeIn">
+        <h1 class="text-5xl md:text-6xl font-bold mb-4 drop-shadow-lg">
+          Pastelaria Delícia
+        </h1>
+        <p class="text-xl md:text-2xl mb-8 drop-shadow-lg">
+          Os melhores pasteis da região!
+        </p>
+
+        <div
+          class="address-card inline-block p-4 rounded-lg transform rotate-1 animate__animated animate__zoomIn animate__delay-1s"
+        >
+          <p class="text-gray-800 text-lg font-semibold">
+            Rua Joviano Alves Margarido,
+          </p>
+          <p class="text-gray-600">Aberto de terça a domingo, das 10h às 22h</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Menu -->
+    <main class="max-w-6xl mx-auto py-12 px-4">
+      <section class="mb-16">
+        <h2
+          class="text-3xl font-bold mb-8 text-center text-amber-800 relative inline-block mx-auto"
+        >
+          <span class="relative z-10 px-4">Pasteis Tradicionais</span>
+          <span
+            class="absolute bottom-0 left-0 w-full h-2 bg-amber-200 z-0"
+          ></span>
+        </h2>
+
+        <div id="pasteis" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Pastel 1 -->
+          <div
+            class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
+          >
+            <div class="h-48 overflow-hidden">
+              <img
+                src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/c49af769-11cb-4bce-9983-d51790b6c048.png"
+                alt="Pastel de carne dourado e crocante com recheio suculento e visível"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+              />
+            </div>
+            <div class="p-4">
+              <h3 class="text-xl font-bold mb-2">Pastel de Carne</h3>
+              <p class="text-gray-600 mb-3">
+                Carne moída temperada com cebola e cheiro verde
+              </p>
+              <p class="text-amber-600 font-bold text-lg">R$ 8,50</p>
+            </div>
+          </div>
+
+          <!-- Pastel 2 -->
+          <div
+            class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
+          >
+            <div class="h-48 overflow-hidden">
+              <img
+                src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/3dce3aa5-97b9-4644-a8a2-45786465d0d8.png"
+                alt="Pastel de queijo derretendo com a massa fina e crocante"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+              />
+            </div>
+            <div class="p-4">
+              <h3 class="text-xl font-bold mb-2">Pastel de Queijo</h3>
+              <p class="text-gray-600 mb-3">
+                Queijo muçarela derretido na massa crocante
+              </p>
+              <p class="text-amber-600 font-bold text-lg">R$ 7,00</p>
+            </div>
+          </div>
+
+          <!-- Pastel 3 -->
+          <div
+            class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
+          >
+            <div class="h-48 overflow-hidden">
+              <img
+                src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/f070e059-c2aa-49c5-81eb-6aac549bffaa.png"
+                alt="Pastel de frango desfiado com catupiry escorrendo levemente"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+              />
+            </div>
+            <div class="p-4">
+              <h3 class="text-xl font-bold mb-2">
+                Pastel de Frango c/ Catupiry
+              </h3>
+              <p class="text-gray-600 mb-3">
+                Frango desfiado com creme de catupiry
+              </p>
+              <p class="text-amber-600 font-bold text-lg">R$ 9,00</p>
+            </div>
+          </div>
+
+          <!-- Pastel 4 - Queijo e Presunto -->
+          <div
+            class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
+          >
+            <div class="h-48 overflow-hidden">
+              <img
+                src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/265b0ed9-6a65-4f37-9f49-6110160c6c04.png"
+                alt="Pastel de queijo e presunto com massa dourada"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+              />
+            </div>
+            <div class="p-4">
+              <h3 class="text-xl font-bold mb-2">Pastel Queijo e Presunto</h3>
+              <p class="text-gray-600 mb-3">
+                Combinação clássica de queijo derretido e presunto
+              </p>
+              <p class="text-amber-600 font-bold text-lg">R$ 8,50</p>
+            </div>
+          </div>
+
+          <!-- Pastel 5 - Calabresa -->
+          <div
+            class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
+          >
+            <div class="h-48 overflow-hidden">
+              <img
+                src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/a57d4889-4f15-499f-a99d-30e0ef0039ad.png"
+                alt="Pastel de calabresa com cebola caramelizada"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+              />
+            </div>
+            <div class="p-4">
+              <h3 class="text-xl font-bold mb-2">Pastel de Calabresa</h3>
+              <p class="text-gray-600 mb-3">
+                Calabresa moída com cebola caramelizada
+              </p>
+              <p class="text-amber-600 font-bold text-lg">R$ 9,50</p>
+            </div>
+          </div>
+
+          <!-- Pastel 6 - Chocolate -->
+          <div
+            class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
+          >
+            <div class="h-48 overflow-hidden">
+              <img
+                src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/d08ea572-e33f-4ce1-b383-c1e20c2e304a.png"
+                alt="Pastel doce de chocolate derretido"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+              />
+            </div>
+            <div class="p-4">
+              <h3 class="text-xl font-bold mb-2">Pastel de Chocolate</h3>
+              <p class="text-gray-600 mb-3">
+                Chocolate cremoso em massa folhada
+              </p>
+              <p class="text-amber-600 font-bold text-lg">R$ 7,50</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mb-16">
+        <h2
+          class="text-3xl font-bold mb-8 text-center text-amber-800 relative inline-block mx-auto"
+        >
+          <span class="relative z-10 px-4">Porções Especiais</span>
+          <span
+            class="absolute bottom-0 left-0 w-full h-2 bg-amber-200 z-0"
+          ></span>
+        </h2>
+
+        <div id="porcoes" class="grid md:grid-cols-2 gap-6">
+          <!-- Porção 1 -->
+          <div
+            class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
+          >
+            <div class="h-64 overflow-hidden">
+              <img
+                src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/d787250e-d51d-438d-be19-34bebdd63936.png"
+                alt="Porção de batata frita crocante com camadas generosas de cheddar derretido e pedaços de bacon crocante por cima"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+              />
+            </div>
+            <div class="p-4">
+              <h3 class="text-xl font-bold mb-2">Batata c/ Cheddar e Bacon</h3>
+              <p class="text-gray-600 mb-3">
+                Batata frita crocante com cheddar derretido e bacon
+              </p>
+              <p class="text-amber-600 font-bold text-lg">R$ 25,00</p>
+            </div>
+          </div>
+
+          <!-- Porção 2 -->
+          <div
+            class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
+          >
+            <div class="h-64 overflow-hidden">
+              <img
+                src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/93d68ba5-1713-4a11-acec-efd779e0fc74.png"
+                alt="Porção de mandioca frita dourada com molho de queijo cremoso ao lado e cebolinha picada por cima"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+              />
+            </div>
+            <div class="p-4">
+              <h3 class="text-xl font-bold mb-2">Mandioca c/ Queijo</h3>
+              <p class="text-gray-600 mb-3">
+                Mandioca frita com molho de queijo cremoso
+              </p>
+              <p class="text-amber-600 font-bold text-lg">R$ 22,00</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mb-16">
+        <h2
+          class="text-3xl font-bold mb-8 text-center text-amber-800 relative inline-block mx-auto"
+        >
+          <span class="relative z-10 px-4">Bebidas</span>
+          <span
+            class="absolute bottom-0 left-0 w-full h-2 bg-amber-200 z-0"
+          ></span>
+        </h2>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="bebidas">
+          <div
+            class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
+          >
+            <div
+              class="h-48 overflow-hidden flex items-center justify-center bg-blue-50"
+            >
+              <img
+                src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/d7fd7951-5cde-4b9b-bc21-2ce45e861fc4.png"
+                alt="Refrigerante gelado"
+                class="h-full w-full object-contain"
+              />
+            </div>
+            <div class="p-4">
+              <h3 class="text-xl font-bold mb-2">Refrigerante</h3>
+              <p class="text-gray-600 mb-3">
+                Lata 350ml - Coca, Guaraná, Fanta
+              </p>
+              <p class="text-amber-600 font-bold text-lg">R$ 6,00</p>
+            </div>
+          </div>
+          <div
+            class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
+          >
+            <div
+              class="h-48 overflow-hidden flex items-center justify-center bg-blue-50"
+            >
+              <img
+                src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/13b34518-58bd-4199-ac66-77226464610f.png"
+                alt="Suco natural"
+                class="h-full w-full object-contain"
+              />
+            </div>
+            <div class="p-4">
+              <h3 class="text-xl font-bold mb-2">Suco Natural</h3>
+              <p class="text-gray-600 mb-3">
+                500ml - Laranja, Maracujá, Abacaxi
+              </p>
+              <p class="text-amber-600 font-bold text-lg">R$ 8,00</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-amber-800 text-white py-8">
+      <div class="max-w-6xl mx-auto px-4">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+          <div class="mb-4 md:mb-0">
+            <h3 class="text-xl font-bold">Pastelaria Delícia</h3>
+            <p>Rua Joviano Alves Margarido,</p>
+            <p>Segunda a Domingo, 10h-22h</p>
+          </div>
+          <div>
+            <p class="text-amber-200">Telefone: (XX) XXXX-XXXX</p>
+            <p class="text-amber-200">@pastelariadelicia</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Botão Admin -->
+    <button
+      onclick="showAdminArea()"
+      class="admin-btn bg-amber-600 text-white p-3 rounded-full shadow-lg hover:bg-amber-700 transition-colors"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+        />
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+        />
+      </svg>
+    </button>
+
+    <script>
+      // Funções para o painel admin
+      function showAdminArea() {
+        document.getElementById("adminArea").classList.remove("hidden");
+      }
+
+      function hideAdminArea() {
+        document.getElementById("adminArea").classList.add("hidden");
+      }
+
+      function loginAdmin() {
+        const password = document.getElementById("adminPassword").value;
+        if (password === "admin123") {
+          document.getElementById("adminPanel").classList.remove("hidden");
+          document.getElementById("addItemForm").classList.add("hidden");
+        } else {
+          alert("Senha incorreta! Tente novamente.");
+        }
+      }
+
+      function showAddForm(type) {
+        document.getElementById("itemType").value = type;
+        document.getElementById("addItemForm").classList.remove("hidden");
+      }
+
+      let removeMode = false;
+
+      function enterRemoveMode() {
+        removeMode = !removeMode;
+        const items = document.querySelectorAll(".menu-item");
+        const removeBtn = document.querySelector(
+          '#adminPanel button[onclick="enterRemoveMode()"]'
+        );
+
+        items.forEach((item) => {
+          item.classList.toggle("ring-2", removeMode);
+          item.classList.toggle("ring-red-500", removeMode);
+          item.onclick = removeMode
+            ? function () {
+                if (confirm("Deseja realmente remover este item?")) {
+                  item.remove();
+                }
+              }
+            : null;
+        });
+
+        removeBtn.textContent = removeMode
+          ? "Sair do Modo Remoção"
+          : "Remover Itens";
+        removeBtn.classList.toggle("bg-red-500", !removeMode);
+        removeBtn.classList.toggle("bg-red-700", removeMode);
+      }
+
+      function addMenuItem() {
+        const type = document.getElementById("itemType").value;
+        const name = document.getElementById("itemName").value;
+        const desc = document.getElementById("itemDesc").value;
+        const price = document.getElementById("itemPrice").value;
+        const img = document.getElementById("itemImg").value;
+
+        if (!name || !desc || !price) {
+          alert("Preencha todos os campos!");
+          return;
+        }
+
+        // Clear form
+        document.getElementById("itemName").value = "";
+        document.getElementById("itemDesc").value = "";
+        document.getElementById("itemPrice").value = "";
+        document.getElementById("itemImg").value = "";
+
+        let menuSection, imageContainerClass;
+        if (type === "pastel") {
+          menuSection = document.querySelector("#pasteis .grid");
+          imageContainerClass = "h-48 overflow-hidden";
+        } else if (type === "porcao") {
+          menuSection = document.querySelector("#porcoes .grid");
+          imageContainerClass = "h-64 overflow-hidden";
+        } else {
+          // bebida
+          menuSection = document.getElementById("bebidas");
+          imageContainerClass =
+            "h-48 overflow-hidden flex items-center justify-center bg-blue-50";
+        }
+
+        const itemHTML = `
+                <div class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300">
+                    <div class="${imageContainerClass}">
+                        <img src="${
+                          img ||
+                          (type === "bebida"
+                            ? "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/bbc97663-22cd-48d3-8a8a-bf670ea362a9.png"
+                            : "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/e2a2a87e-e5aa-456d-84e7-dcee6faf1a96.png")
+                        }" 
+                             alt="${name}" 
+                             class="w-full h-full ${
+                               type === "bebida"
+                                 ? "object-contain"
+                                 : "object-cover"
+                             } transition-transform duration-500 hover:scale-110">
+                    </div>
+                    <div class="p-4">
+                        <h3 class="text-xl font-bold mb-2">${name}</h3>
+                        <p class="text-gray-600 mb-3">${desc}</p>
+                        <p class="text-amber-600 font-bold text-lg">R$ ${price}</p>
+                    </div>
+                </div>
+            `;
+
+        menuSection.insertAdjacentHTML("beforeend", itemHTML);
+        alert("Item adicionado com sucesso!");
+        document.getElementById("addItemForm").classList.add("hidden");
+      }
+
+      // Efeito de animação nos cards ao carregar a página
+      document.addEventListener("DOMContentLoaded", function () {
+        const menuItems = document.querySelectorAll(".menu-item");
+        menuItems.forEach((item, index) => {
+          item.style.animationDelay = `${index * 0.1}s`;
+          item.classList.add("animate__animated", "animate__fadeInUp");
+        });
+      });
+    </script>
+  </body>
+</html>
