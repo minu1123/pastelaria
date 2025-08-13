@@ -1,0 +1,109 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap");
+
+:root {
+  --bg: #fef6e4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: "Poppins", sans-serif;
+  background-color: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Efeito de “card flutuando” nos itens do menu */
+.menu-item {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.menu-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Botão flutuante do Admin */
+.admin-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 100;
+}
+
+/* Imagem/hero do topo */
+.hero-img {
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+    url("https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/1b6e1de0-0c19-441d-81cb-5d55d259dd4b.png");
+  background-size: cover;
+  background-position: center;
+}
+
+/* Cartão do endereço com leve vidro desfocado */
+.address-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(5px);
+}
+
+.whatsapp-btn {
+  position: fixed;
+  bottom: 90px; /* acima do botão de admin */
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  background-color: #25D366;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  z-index: 999;
+  transition: transform 0.2s ease-in-out;
+}
+
+.whatsapp-btn img {
+  width: 35px;
+  height: 35px;
+}
+
+.whatsapp-btn:hover {
+  transform: scale(1.1);
+}
+
+
+#waBadge{
+  position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;
+  padding:0 6px;background:#ef4444;color:#fff;font-size:12px;line-height:20px;
+  text-align:center;border-radius:9999px;box-shadow:0 2px 6px rgba(0,0,0,.25);
+  display:none
+}
+/* Destaque de item selecionado */
+.menu-item.cart-selected{outline:3px solid #22c55e;outline-offset:-3px}
+
+/* Popover de quantidade */
+.qty-popover{
+  position:absolute;z-index:60;background:#fff;border-radius:.75rem;
+  box-shadow:0 10px 25px rgba(0,0,0,.15);
+  width:280px;max-width:92vw;padding:12px;display:none
+}
+.qty-popover.show{display:block}
+.qty-popover .row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.qty-popover .title{font-weight:700;font-size:16px}
+.qty-popover .section{font-size:12px;color:#6b7280}
+.qty-popover .price{font-weight:700;color:#92400e}
+.qty-popover .btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  height:40px;min-width:40px;border-radius:.75rem;border:1px solid #e5e7eb;
+  background:#fff;cursor:pointer
+}
+.qty-popover .btn:active{transform:scale(.98)}
+.qty-popover .btn-primary{
+  background:#16a34a;border-color:#16a34a;color:#fff;font-weight:600;padding:0 14px
+}
+.qty-popover .btn-muted{background:#f3f4f6}

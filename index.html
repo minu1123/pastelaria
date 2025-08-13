@@ -9,40 +9,81 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
     />
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap");
+    <!-- CSS externo -->
+    <link rel="stylesheet" href="style.css" />
 
-      body {
-        font-family: "Poppins", sans-serif;
-        background-color: #fef6e4;
-      }
-
-      .menu-item:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-      }
-
-      .admin-btn {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 100;
-      }
-
-      .hero-img {
-        background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
-          url("https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/1b6e1de0-0c19-441d-81cb-5d55d259dd4b.png");
-        background-size: cover;
-        background-position: center;
-      }
-
-      .address-card {
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(5px);
-      }
-    </style>
   </head>
   <body>
+
+    <!-- ====== Painel do Carrinho (canto inferior direito) ====== -->
+    <aside id="cartPanel"
+      class="fixed right-4 bottom-20 w-[300px] max-h-[60vh] overflow-hidden rounded-2xl shadow-xl bg-white border border-amber-200 hidden">
+      <div class="p-3 bg-amber-600 text-white flex items-center justify-between">
+        <strong class="text-lg">Seu pedido</strong>
+        <button id="cartClearBtn"
+          class="text-sm bg-white/20 px-2 py-1 rounded hover:bg-white/30">Limpar</button>
+      </div>
+
+      <div id="cartList" class="p-3 space-y-2 max-h-[40vh] overflow-auto">
+        <!-- Itens do carrinho são inseridos via JS -->
+      </div>
+
+      <div class="p-3 border-t">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-gray-600">Total</span>
+          <strong id="cartTotal" class="text-lg text-amber-700">R$ 0,00</strong>
+        </div>
+        <a id="cartToWhats"
+           target="_blank"
+           href="#"
+           class="block w-full text-center bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg py-2">
+          Enviar pedido no WhatsApp
+        </a>
+      </div>
+    </aside>
+
+    <!-- Popover global de quantidade -->
+    <div id="qtyPopover" class="qty-popover">
+      <div class="row" style="margin-bottom:8px">
+        <div>
+          <div id="qpName" class="title">Item</div>
+          <div id="qpSection" class="section">Categoria</div>
+        </div>
+        <div id="qpUnitPrice" class="price">R$ 0,00</div>
+      </div>
+      <div class="row" style="margin-bottom:10px">
+        <button id="qpMinus" class="btn" aria-label="Diminuir">−</button>
+        <input id="qpQty" type="text" inputmode="numeric"
+               style="width:72px;height:40px;text-align:center;border:1px solid #e5e7eb;border-radius:.5rem"
+               value="1">
+        <button id="qpPlus" class="btn" aria-label="Aumentar">+</button>
+        <div style="flex:1;text-align:right;font-size:14px">
+          <span id="qpSubtotal" class="price">R$ 0,00</span>
+        </div>
+      </div>
+      <div class="row" style="gap:8px">
+        <button id="qpRemove" class="btn btn-muted" style="flex:1;display:none">Remover</button>
+        <button id="qpCancel" class="btn btn-muted" style="flex:1">Cancelar</button>
+        <button id="qpConfirm" class="btn btn-primary" style="flex:1">Adicionar</button>
+      </div>
+    </div>
+
+    <!-- Botão flutuante WhatsApp -->
+    <a 
+      id="whatsBtn"
+      href="#"
+      class="whatsapp-btn"
+      target="_blank"
+      rel="noopener"
+      title="Fale conosco no WhatsApp"
+    >
+      <img 
+        src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" 
+        alt="WhatsApp"   
+      />
+      <span id="waBadge">0</span>
+    </a>
+
     <!-- Área do Administrador (inicialmente oculta) -->
     <div
       id="adminArea"
@@ -60,6 +101,7 @@
             class="w-full p-2 border rounded"
           />
         </div>
+
         <div id="adminPanel" class="hidden">
           <div class="mb-4 grid grid-cols-3 gap-3">
             <button
@@ -81,13 +123,45 @@
               Adicionar Bebida
             </button>
           </div>
-          <button
-            onclick="enterRemoveMode()"
-            class="w-full bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 mb-4"
-          >
-            ${removeMode ? 'Sair' : 'Entrar'} no Modo Remoção
-          </button>
+
+          <!-- Ações -->
+          <div class="flex gap-2 mb-4">
+            <button
+              id="removeBtn"
+              onclick="enterRemoveMode()"
+              class="flex-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            >
+              Remover Itens
+            </button>
+            <button
+              id="editBtn"
+              onclick="enterEditMode()"
+              class="flex-1 bg-sky-500 text-white px-4 py-2 rounded hover:bg-sky-600"
+            >
+              Editar Itens
+            </button>
+            <!-- Reordenar Itens (drag & drop) -->
+            <button
+              id="sortBtn"
+              onclick="enterSortMode()"
+              class="flex-1 bg-amber-500 text-white px-4 py-2 rounded hover:bg-amber-600"
+              title="Arraste os cartões para reorganizar"
+            >
+              Reordenar Itens
+            </button>
+          </div>
+
+          <!-- Formulário de adição/edição -->
           <div id="addItemForm" class="hidden mb-4">
+            <!-- Seletor Doce/Salgado (apenas quando tipo = pastel) -->
+            <div id="pastelKindRow" class="hidden mb-2">
+              <label class="block text-sm font-medium mb-1">Tipo de pastel</label>
+              <select id="pastelCategory" class="w-full p-2 border rounded">
+                <option value="salgado">Pastel Salgado</option>
+                <option value="doce">Pastel Doce</option>
+              </select>
+            </div>
+
             <input
               type="text"
               id="itemName"
@@ -100,27 +174,44 @@
               placeholder="Descrição"
               class="w-full p-2 border rounded mb-2"
             />
-            <input
-              type="text"
-              id="itemPrice"
-              placeholder="Preço (R$)"
-              class="w-full p-2 border rounded mb-2"
-            />
+            <div class="mb-2">
+              <label class="block text-sm font-medium mb-1">Preço</label>
+              <input
+                type="text"
+                id="itemPrice"
+                placeholder="R$ 0,00"
+                class="w-full p-2 border rounded"
+              />
+            </div>
             <input
               type="text"
               id="itemImg"
               placeholder="URL da Imagem"
               class="w-full p-2 border rounded mb-2"
             />
+
             <input type="hidden" id="itemType" />
-            <button
-              onclick="addMenuItem()"
-              class="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 w-full"
-            >
-              Salvar
-            </button>
+            <input type="hidden" id="editItemId" />
+
+            <div class="flex gap-2">
+              <button
+                id="saveBtn"
+                onclick="submitItemForm()"
+                class="flex-1 bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700"
+              >
+                Salvar
+              </button>
+              <button
+                id="cancelEditBtn"
+                onclick="cancelEdit()"
+                class="hidden flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
+
         <div class="flex gap-2 justify-center">
           <button
             onclick="loginAdmin()"
@@ -156,13 +247,16 @@
           <p class="text-gray-800 text-lg font-semibold">
             Rua Joviano Alves Margarido, Nº05
           </p>
-          <p class="text-gray-600">Aberto de Segunda a domingo, das 18h às 23h<br>(16)9 9356-2301</p>
+          <p class="text-gray-600">
+            Aberto de Segunda a domingo, das 18h às 23h<br />(16)9 9356-2301
+          </p>
         </div>
       </div>
     </header>
 
     <!-- Menu -->
     <main class="max-w-6xl mx-auto py-12 px-4">
+      <!-- Pasteis (Salgados) -->
       <section class="mb-16">
         <h2
           class="text-3xl font-bold mb-8 text-center text-amber-800 relative inline-block mx-auto"
@@ -174,131 +268,225 @@
         </h2>
 
         <div id="pasteis" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <!-- Pastel 1 -->
+          <!-- Exemplo de card estático -->
           <div
             class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
           >
             <div class="h-48 overflow-hidden">
               <img
-                src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/c49af769-11cb-4bce-9983-d51790b6c048.png"
-                alt="Pastel de carne dourado e crocante com recheio suculento e visível"
+                src="https://sabores-new.s3.amazonaws.com/public/2024/11/pastel-especial-carne.jpg"
+                alt="Pastel de carne"
                 class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
               />
             </div>
             <div class="p-4">
               <h3 class="text-xl font-bold mb-2">Pastel de Carne</h3>
-              <p class="text-gray-600 mb-3">
-                Carne moída temperada 
-              </p>
+              <p class="text-gray-600 mb-3">Carne moída temperada</p>
               <p class="text-amber-600 font-bold text-lg">R$ 10,00</p>
             </div>
           </div>
 
           <!-- Pastel 2 -->
-          <div
-            class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
-          >
+          <div class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer">
             <div class="h-48 overflow-hidden">
               <img
-                src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/3dce3aa5-97b9-4644-a8a2-45786465d0d8.png"
-                alt="Pastel de queijo derretendo com a massa fina e crocante"
-                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-              />
+                src="https://paranaibamais.com.br/wp-content/uploads/2024/10/receita-pastel.png"
+                alt="Pastel de carne com queijo derretendo na massa crocante"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
             </div>
             <div class="p-4">
               <h3 class="text-xl font-bold mb-2">Pastel de carne com queijo</h3>
-              <p class="text-gray-600 mb-3">
-                Queijo muçarela derretido na massa crocante
-              </p>
+              <p class="text-gray-600 mb-3">Queijo muçarela derretido na massa crocante</p>
               <p class="text-amber-600 font-bold text-lg">R$ 14,00</p>
             </div>
           </div>
 
           <!-- Pastel 3 -->
-          <div
-            class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
-          >
+          <div class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer">
             <div class="h-48 overflow-hidden">
               <img
-                src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/f070e059-c2aa-49c5-81eb-6aac549bffaa.png"
-                alt="Pastel de frango desfiado com catupiry escorrendo levemente"
-                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-              />
+                src="https://minhasreceitinhas.com.br/wp-content/uploads/2023/05/Pastel-de-feira-caseiro-730x365.jpg"
+                alt="Pastel de frango desfiado"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
             </div>
             <div class="p-4">
-              <h3 class="text-xl font-bold mb-2">
-                Pastel de Frango 
-              </h3>
-              <p class="text-gray-600 mb-3">
-                Frango desfiado temperado
-              </p>
+              <h3 class="text-xl font-bold mb-2">Pastel de Frango</h3>
+              <p class="text-gray-600 mb-3">Frango desfiado temperado</p>
               <p class="text-amber-600 font-bold text-lg">R$ 10,00</p>
             </div>
           </div>
 
-          <!-- Pastel 4  -->
-          <div
-            class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
-          >
+          <!-- Pastel 4 -->
+          <div class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer">
             <div class="h-48 overflow-hidden">
               <img
-                src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/265b0ed9-6a65-4f37-9f49-6110160c6c04.png"
-                alt="Pastel de queijo e presunto com massa dourada"
-                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-              />
+                src="https://minhasreceitinhas.com.br/wp-content/uploads/2023/05/Pastel-de-feira-caseiro-730x365.jpg"
+                alt="Pastel de frango com catupiry"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
             </div>
             <div class="p-4">
               <h3 class="text-xl font-bold mb-2">Pastel Frango com Catupiry</h3>
-              <p class="text-gray-600 mb-3">
-                Frango desfiado com catupiry
-              </p>
+              <p class="text-gray-600 mb-3">Frango desfiado com catupiry</p>
               <p class="text-amber-600 font-bold text-lg">R$ 13,00</p>
             </div>
           </div>
 
-          <!-- Pastel 5 - -->
-          <div
-            class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
-          >
+          <!-- Pastel 5 -->
+          <div class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer">
             <div class="h-48 overflow-hidden">
               <img
-                src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/a57d4889-4f15-499f-a99d-30e0ef0039ad.png"
-                alt="Pastel de calabresa com cebola caramelizada"
-                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-              />
+                src="https://minhasreceitinhas.com.br/wp-content/uploads/2023/05/Pastel-de-feira-caseiro-730x365.jpg"
+                alt="Pastel de queijo"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
             </div>
             <div class="p-4">
               <h3 class="text-xl font-bold mb-2">Pastel de Queijo</h3>
-              <p class="text-gray-600 mb-3">
-                Muita mussarela derretida
-              </p>
+              <p class="text-gray-600 mb-3">Muita mussarela derretida</p>
               <p class="text-amber-600 font-bold text-lg">R$ 10,00</p>
             </div>
           </div>
 
           <!-- Pastel 6 -->
+          <div class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer">
+            <div class="h-48 overflow-hidden">
+              <img
+                src="https://minhasreceitinhas.com.br/wp-content/uploads/2023/05/Pastel-de-feira-caseiro-730x365.jpg"
+                alt="Pastel de pizza"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
+            </div>
+            <div class="p-4">
+              <h3 class="text-xl font-bold mb-2">Pastel de Pizza</h3>
+              <p class="text-gray-600 mb-3">Tomate, presunto, mussarela e orégano</p>
+              <p class="text-amber-600 font-bold text-lg">R$ 12,00</p>
+            </div>
+          </div>
+
+          <!-- Pastel 7 -->
+          <div class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer">
+            <div class="h-48 overflow-hidden">
+              <img
+                src="https://minhasreceitinhas.com.br/wp-content/uploads/2023/05/Pastel-de-feira-caseiro-730x365.jpg"
+                alt="Pastel de presunto e queijo"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
+            </div>
+            <div class="p-4">
+              <h3 class="text-xl font-bold mb-2">Pastel de Presunto e Queijo</h3>
+              <p class="text-gray-600 mb-3">Presunto e mussarela derretida</p>
+              <p class="text-amber-600 font-bold text-lg">R$ 10,00</p>
+            </div>
+          </div>
+
+          <!-- Pastel 8 -->
+          <div class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer">
+            <div class="h-48 overflow-hidden">
+              <img
+                src="https://minhasreceitinhas.com.br/wp-content/uploads/2023/05/Pastel-de-feira-caseiro-730x365.jpg"
+                alt="Pastel de calabresa"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
+            </div>
+            <div class="p-4">
+              <h3 class="text-xl font-bold mb-2">Pastel de Calabresa</h3>
+              <p class="text-gray-600 mb-3">Calabresa temperada</p>
+              <p class="text-amber-600 font-bold text-lg">R$ 10,00</p>
+            </div>
+          </div>
+
+          <!-- Pastel 9 -->
+          <div class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer">
+            <div class="h-48 overflow-hidden">
+              <img
+                src="https://minhasreceitinhas.com.br/wp-content/uploads/2023/05/Pastel-de-feira-caseiro-730x365.jpg"
+                alt="Pastel de palmito"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
+            </div>
+            <div class="p-4">
+              <h3 class="text-xl font-bold mb-2">Pastel de Palmito</h3>
+              <p class="text-gray-600 mb-3">Palmito temperado em cubos</p>
+              <p class="text-amber-600 font-bold text-lg">R$ 14,00</p>
+            </div>
+          </div>
+
+          <!-- Pastel 10 -->
+          <div class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer">
+            <div class="h-48 overflow-hidden">
+              <img
+                src="https://minhasreceitinhas.com.br/wp-content/uploads/2023/05/Pastel-de-feira-caseiro-730x365.jpg"
+                alt="Pastel de carne seca"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
+            </div>
+            <div class="p-4">
+              <h3 class="text-xl font-bold mb-2">Pastel de Carne Seca</h3>
+              <p class="text-gray-600 mb-3">Carne seca temperada</p>
+              <p class="text-amber-600 font-bold text-lg">R$ 15,00</p>
+            </div>
+          </div>
+
+          <!-- Pastel 11 -->
+          <div class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer">
+            <div class="h-48 overflow-hidden">
+              <img
+                src="https://minhasreceitinhas.com.br/wp-content/uploads/2023/05/Pastel-de-feira-caseiro-730x365.jpg"
+                alt="Pastel de costela"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
+            </div>
+            <div class="p-4">
+              <h3 class="text-xl font-bold mb-2">Pastel de Costela</h3>
+              <p class="text-gray-600 mb-3">Costela desfiada bem temperada</p>
+              <p class="text-amber-600 font-bold text-lg">R$ 15,00</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pasteis Doces -->
+      <section class="mb-16">
+        <h2
+          class="text-3xl font-bold mb-8 text-center text-amber-800 relative inline-block mx-auto"
+        >
+          <span class="relative z-10 px-4">Pasteis Doces</span>
+          <span class="absolute bottom-0 left-0 w-full h-2 bg-amber-200 z-0"></span>
+        </h2>
+
+        <div id="doces" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Exemplo de card estático doce -->
           <div
             class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
           >
             <div class="h-48 overflow-hidden">
               <img
                 src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/d08ea572-e33f-4ce1-b383-c1e20c2e304a.png"
-                alt="Pastel doce de chocolate derretido"
+                alt="Pastel de chocolate"
                 class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
               />
             </div>
             <div class="p-4">
-              <h3 class="text-xl font-bold mb-2">Pastel de Pizza</h3>
-              <p class="text-gray-600 mb-3">
-                Tomate, presunto, mussarela e oregano
-              </p>
-              <p class="text-amber-600 font-bold text-lg">R$ 12,00</p>
+              <h3 class="text-xl font-bold mb-2">Chocolate</h3>
+              <p class="text-gray-600 mb-3">Creme de chocolate cremoso</p>
+              <p class="text-amber-600 font-bold text-lg">R$ 10,00</p>
+            </div>
+          </div>
+
+          <div
+            class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
+          >
+            <div class="h-48 overflow-hidden">
+              <img
+                src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/d08ea572-e33f-4ce1-b383-c1e20c2e304a.png"
+                alt="Pastel Romeu e Julieta"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+              />
+            </div>
+            <div class="p-4">
+              <h3 class="text-xl font-bold mb-2">Chocolate com Morango</h3>
+              <p class="text-gray-600 mb-3">Chocolate cremoso com morangos</p>
+              <p class="text-amber-600 font-bold text-lg">R$ 15,00</p>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="mb-16">
+      <!-- Porções -->
+      <section class="mb-16" id="porcoes">
         <h2
           class="text-3xl font-bold mb-8 text-center text-amber-800 relative inline-block mx-auto"
         >
@@ -308,15 +496,14 @@
           ></span>
         </h2>
 
-        <div id="porcoes" class="grid md:grid-cols-2 gap-6">
-          <!-- Porção 1 -->
+        <div class="grid md:grid-cols-2 gap-6">
           <div
             class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
           >
             <div class="h-64 overflow-hidden">
               <img
                 src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/d787250e-d51d-438d-be19-34bebdd63936.png"
-                alt="Porção de batata frita crocante com camadas generosas de cheddar derretido e pedaços de bacon crocante por cima"
+                alt="Porção de batata com cheddar e bacon"
                 class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
               />
             </div>
@@ -328,30 +515,10 @@
               <p class="text-amber-600 font-bold text-lg">R$ 15,00</p>
             </div>
           </div>
-
-          <!--
-          <div
-            class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
-          >
-            <div class="h-64 overflow-hidden">
-              <img
-                src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/93d68ba5-1713-4a11-acec-efd779e0fc74.png"
-                alt="Porção de mandioca frita dourada com molho de queijo cremoso ao lado e cebolinha picada por cima"
-                class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-              />
-            </div>
-            <div class="p-4">
-              <h3 class="text-xl font-bold mb-2">Mandioca c/ Queijo</h3>
-              <p class="text-gray-600 mb-3">
-                Mandioca frita com molho de queijo cremoso
-              </p>
-              <p class="text-amber-600 font-bold text-lg">R$ 22,00</p>
-            </div>
-          </div>
         </div>
       </section>
-    
-      -->
+
+      <!-- Bebidas -->
       <section class="mb-16">
         <h2
           class="text-3xl font-bold mb-8 text-center text-amber-800 relative inline-block mx-auto"
@@ -370,8 +537,8 @@
               class="h-48 overflow-hidden flex items-center justify-center bg-blue-50"
             >
               <img
-                src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/d7fd7951-5cde-4b9b-bc21-2ce45e861fc4.png"
-                alt="Refrigerante gelado"
+                src="https://fly.metroimg.com/upload/q_85,w_700/https://uploads.metroimg.com/wp-content/uploads/2016/01/01225444/iStock_000067779093_Medium-e1451695942707.jpg"
+                alt="Refrigerante"
                 class="h-full w-full object-contain"
               />
             </div>
@@ -383,6 +550,7 @@
               <p class="text-amber-600 font-bold text-lg">R$ 6,00</p>
             </div>
           </div>
+
           <div
             class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
           >
@@ -403,8 +571,26 @@
               <p class="text-amber-600 font-bold text-lg">R$ 8,00</p>
             </div>
           </div>
+
+          <div
+            class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer"
+          >
+            <div class="h-48 overflow-hidden flex items-center justify-center bg-blue-50">
+              <img
+                src="https://static.ndmais.com.br/2023/11/caldo-de-cana.jpg"
+                alt="Caldo de cana gelado"
+                class="h-full w-full object-contain"
+              />
+            </div>
+            <div class="p-4">
+              <h3 class="text-xl font-bold mb-2">Caldo de Cana</h3>
+              <p class="text-gray-600 mb-3">500ml - Fresco, feito na hora</p>
+              <p class="text-amber-600 font-bold text-lg">R$ 8,00</p>
+            </div>
+          </div>
         </div>
       </section>
+
     </main>
 
     <!-- Footer -->
@@ -414,7 +600,7 @@
           <div class="mb-4 md:mb-0">
             <h3 class="text-xl font-bold">Pastelaria da Familia</h3>
             <p>Rua Joviano Alves Margarido, Nº05</p>
-            <p>Segunda a Domingo, 18h 23h</p>
+            <p>Segunda a Domingo, 18h às 23h</p>
           </div>
           <div>
             <p class="text-amber-200">Telefone: (16) 9 9345-2301</p>
@@ -424,10 +610,10 @@
       </div>
     </footer>
 
-    <!-- Botão Admin -->
+    <!-- Botão Admin flutuante -->
     <button
       onclick="showAdminArea()"
-      class="admin-btn bg-amber-600 text-white p-3 rounded-full shadow-lg hover:bg-amber-700 transition-colors"
+      class="admin-btn bg-amber-600 text-white p-3 rounded-full shadow-lg hover:bg-amber-700 transition-colors fixed bottom-4 right-4"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -451,128 +637,7 @@
       </svg>
     </button>
 
-    <script>
-      // Funções para o painel admin
-      function showAdminArea() {
-        document.getElementById("adminArea").classList.remove("hidden");
-      }
-
-      function hideAdminArea() {
-        document.getElementById("adminArea").classList.add("hidden");
-      }
-
-      function loginAdmin() {
-        const password = document.getElementById("adminPassword").value;
-        if (password === "admin123") {
-          document.getElementById("adminPanel").classList.remove("hidden");
-          document.getElementById("addItemForm").classList.add("hidden");
-        } else {
-          alert("Senha incorreta! Tente novamente.");
-        }
-      }
-
-      function showAddForm(type) {
-        document.getElementById("itemType").value = type;
-        document.getElementById("addItemForm").classList.remove("hidden");
-      }
-
-      let removeMode = false;
-
-      function enterRemoveMode() {
-        removeMode = !removeMode;
-        const items = document.querySelectorAll(".menu-item");
-        const removeBtn = document.querySelector(
-          '#adminPanel button[onclick="enterRemoveMode()"]'
-        );
-
-        items.forEach((item) => {
-          item.classList.toggle("ring-2", removeMode);
-          item.classList.toggle("ring-red-500", removeMode);
-          item.onclick = removeMode
-            ? function () {
-                if (confirm("Deseja realmente remover este item?")) {
-                  item.remove();
-                }
-              }
-            : null;
-        });
-
-        removeBtn.textContent = removeMode
-          ? "Sair do Modo Remoção"
-          : "Remover Itens";
-        removeBtn.classList.toggle("bg-red-500", !removeMode);
-        removeBtn.classList.toggle("bg-red-700", removeMode);
-      }
-
-      function addMenuItem() {
-        const type = document.getElementById("itemType").value;
-        const name = document.getElementById("itemName").value;
-        const desc = document.getElementById("itemDesc").value;
-        const price = document.getElementById("itemPrice").value;
-        const img = document.getElementById("itemImg").value;
-
-        if (!name || !desc || !price) {
-          alert("Preencha todos os campos!");
-          return;
-        }
-
-        // Clear form
-        document.getElementById("itemName").value = "";
-        document.getElementById("itemDesc").value = "";
-        document.getElementById("itemPrice").value = "";
-        document.getElementById("itemImg").value = "";
-
-        let menuSection, imageContainerClass;
-        if (type === "pastel") {
-          menuSection = document.querySelector("#pasteis .grid");
-          imageContainerClass = "h-48 overflow-hidden";
-        } else if (type === "porcao") {
-          menuSection = document.querySelector("#porcoes .grid");
-          imageContainerClass = "h-64 overflow-hidden";
-        } else {
-          // bebida
-          menuSection = document.getElementById("bebidas");
-          imageContainerClass =
-            "h-48 overflow-hidden flex items-center justify-center bg-blue-50";
-        }
-
-        const itemHTML = `
-                <div class="menu-item bg-white rounded-lg overflow-hidden shadow-lg transition-all duration-300">
-                    <div class="${imageContainerClass}">
-                        <img src="${
-                          img ||
-                          (type === "bebida"
-                            ? "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/bbc97663-22cd-48d3-8a8a-bf670ea362a9.png"
-                            : "https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/e2a2a87e-e5aa-456d-84e7-dcee6faf1a96.png")
-                        }" 
-                             alt="${name}" 
-                             class="w-full h-full ${
-                               type === "bebida"
-                                 ? "object-contain"
-                                 : "object-cover"
-                             } transition-transform duration-500 hover:scale-110">
-                    </div>
-                    <div class="p-4">
-                        <h3 class="text-xl font-bold mb-2">${name}</h3>
-                        <p class="text-gray-600 mb-3">${desc}</p>
-                        <p class="text-amber-600 font-bold text-lg">R$ ${price}</p>
-                    </div>
-                </div>
-            `;
-
-        menuSection.insertAdjacentHTML("beforeend", itemHTML);
-        alert("Item adicionado com sucesso!");
-        document.getElementById("addItemForm").classList.add("hidden");
-      }
-
-      // Efeito de animação nos cards ao carregar a página
-      document.addEventListener("DOMContentLoaded", function () {
-        const menuItems = document.querySelectorAll(".menu-item");
-        menuItems.forEach((item, index) => {
-          item.style.animationDelay = `${index * 0.1}s`;
-          item.classList.add("animate__animated", "animate__fadeInUp");
-        });
-      });
-    </script>
+    <!-- JS externo -->
+    <script src="script.js"></script>
   </body>
 </html>
