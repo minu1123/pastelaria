@@ -8,6 +8,7 @@
   box-sizing: border-box;
 }
 
+
 html, body {
   height: 100%;
 }
@@ -40,10 +41,19 @@ body {
 .hero-img {
   background:
     linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
-    url("https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/1b6e1de0-0c19-441d-81cb-5d55d259dd4b.png");
+    url("https://diaonline.ig.com.br/wp-content/uploads/2019/06/pastel-em-braslia_capa-e1560976125579.jpg");
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
+  min-height: 250px; /* altura do header */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: white; /* cor do texto */
+  padding: 20px;
 }
+
 
 /* Cartão do endereço com leve vidro desfocado */
 .address-card {

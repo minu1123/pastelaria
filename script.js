@@ -31,7 +31,12 @@ function onlyDigitsComma(s) {
   return (s || "").toString().replace(/[^\d,]/g, "");
 }
 
-// ===================== Admin modal =====================
+/* =======================================================================
+   ===================== Admin modal (DESATIVADO) =========================
+   OBS: Todo o bloco abaixo está comentado para remover o login/área admin.
+   Se quiser reativar no futuro, basta remover os comentários.
+==========================================================================
+
 function showAdminArea() {
   document.getElementById("adminArea").classList.remove("hidden");
 }
@@ -49,7 +54,7 @@ function loginAdmin() {
   }
 }
 
-// ===================== Formulário =====================
+// ===================== Formulário (DESATIVADO) =====================
 function showAddForm(type) {
   document.getElementById("itemType").value = type;
   document.getElementById("editItemId").value = "";
@@ -73,26 +78,6 @@ function showAddForm(type) {
   }
 
   document.getElementById("addItemForm").classList.remove("hidden");
-}
-
-function priceToMasked(val) {
-  const only = (val || "").replace(/\D/g, "");
-  const num = parseInt(only || "0", 10);
-  const cents = (num / 100).toFixed(2).replace(".", ",");
-  return `R$ ${cents}`;
-}
-function maskedToNumber(masked) {
-  return onlyDigitsComma(masked);
-}
-function attachPriceMask() {
-  const priceInput = document.getElementById("itemPrice");
-  if (!priceInput._maskAttached) {
-    priceInput.addEventListener("input", () => {
-      priceInput.value = priceToMasked(priceInput.value);
-    });
-    if (!priceInput.value) priceInput.value = "R$ 0,00";
-    priceInput._maskAttached = true;
-  }
 }
 
 function submitItemForm() {
@@ -160,7 +145,6 @@ function submitItemForm() {
 }
 
 function cancelEdit() { exitEditStateUI(); }
-
 function exitEditStateUI() {
   document.getElementById("editItemId").value = "";
   document.getElementById("saveBtn").textContent = "Salvar";
@@ -168,9 +152,36 @@ function exitEditStateUI() {
   document.getElementById("addItemForm").classList.add("hidden");
 }
 
-// ===================== Conversão de cards estáticos -> dinâmicos =====================
+====================================================================== */
 
-// Descobre tipo e (se for pastel) doce/salgado pelo container
+// ===================== Máscara de Preço (mantida) =====================
+function priceToMasked(val) {
+  const only = (val || "").replace(/\D/g, "");
+  const num = parseInt(only || "0", 10);
+  const cents = (num / 100).toFixed(2).replace(".", ",");
+  return `R$ ${cents}`;
+}
+function maskedToNumber(masked) {
+  return onlyDigitsComma(masked);
+}
+function attachPriceMask() {
+  const priceInput = document.getElementById("itemPrice");
+  if (!priceInput) return; // pode não existir sem admin
+  if (!priceInput._maskAttached) {
+    priceInput.addEventListener("input", () => {
+      priceInput.value = priceToMasked(priceInput.value);
+    });
+    if (!priceInput.value) priceInput.value = "R$ 0,00";
+    priceInput._maskAttached = true;
+  }
+}
+
+/* =======================================================================
+   ===== Conversão de cards estáticos -> dinâmicos (DESATIVADA) ==========
+   Esses helpers eram usados para modos Admin (editar/remover/reordenar).
+   Como os modos foram desativados, comentamos para evitar efeitos colaterais.
+==========================================================================
+
 function inferTypeAndCategoryFromDOM(cardEl) {
   const inPasteis = cardEl.closest("#pasteis");
   const inDoces = cardEl.closest("#doces");
@@ -186,11 +197,11 @@ function inferTypeAndCategoryFromDOM(cardEl) {
 }
 
 function parsePriceFromCard(cardEl) {
-  const priceP = [...cardEl.querySelectorAll("p")].find(p => /R\$\s*/i.test(p.textContent));
+  const priceP = [...cardEl.querySelectorAll("p")].find(p => /R\$\s/i.test(p.textContent));
   if (!priceP) return "0,00";
   return onlyDigitsComma(priceP.textContent) || "0,00";
 }
-
+*/ 
 function convertStaticCardToItem(cardEl) {
   const existingId = cardEl.getAttribute("data-id");
   if (existingId) return existingId;
@@ -219,16 +230,16 @@ function convertStaticCardToItem(cardEl) {
   items.push(item);
   saveItems(items);
 
+  cardEl.setAttribute("data-id", newId);
+  cardEl.classList.add("dynamic-item");
+
   return newId;
 }
 
 function ensureDynamic(cardEl) {
   let id = cardEl.getAttribute("data-id");
   if (id) return id;
-
-  const newId = convertStaticCardToItem(cardEl);
-  renderAll(); // recria DOM com card dinâmico
-  return newId;
+  return convertStaticCardToItem(cardEl);
 }
 
 function convertAllStaticInGrids() {
@@ -239,18 +250,16 @@ function convertAllStaticInGrids() {
     document.querySelector("#porcoes .grid"),
   ].filter(Boolean);
 
-  let converted = false;
   grids.forEach(grid => {
     grid.querySelectorAll(".menu-item:not(.dynamic-item)").forEach(card => {
       convertStaticCardToItem(card);
-      converted = true;
     });
   });
-
-  if (converted) renderAll();
 }
 
-// ===================== Renderização =====================
+/*====================================================================== */
+
+// ===================== Renderização (mantida) =====================
 function renderCard(item) {
   const isBebida = item.type === "bebida";
   const imgClass = isBebida ? "object-contain" : "object-cover";
@@ -309,6 +318,7 @@ function renderAll() {
     });
   });
 
+  // No-ops (stubs) — não fazem nada porque o Admin foi desativado
   applyModesToCards();
   applySortability();
 
@@ -317,7 +327,12 @@ function renderAll() {
   refreshAllSelectedStates();
 }
 
-// ===================== Modos: Remover / Editar / Reordenar =====================
+/* =======================================================================
+   ============ Modos Admin e Edição/Drag (DESATIVADOS) ==================
+   Comentado todo o bloco de modos e drag & drop.
+   No fim, criamos stubs vazios para não quebrar chamadas existentes.
+==========================================================================
+
 let removeMode = getMode(MODE_REMOVE_KEY);
 let editMode   = getMode(MODE_EDIT_KEY);
 let sortMode   = getMode(MODE_SORT_KEY);
@@ -375,7 +390,6 @@ function applyModes() {
   applyModesToCards();
   applySortability();
 
-  // Modo admin aberto? desabilita click do carrinho
   attachCartClickHandlers();
   refreshAllSelectedStates();
 }
@@ -386,33 +400,9 @@ function applyModesToCards() {
     item.classList.remove("ring-2", "ring-red-500", "ring-sky-500", "ring-amber-500", "cursor-not-allowed");
     item.onclick = null;
     item.removeAttribute("draggable");
-
-    if (removeMode) {
-      item.classList.add("ring-2", "ring-red-500");
-      item.onclick = function () {
-        const id = ensureDynamic(this);
-        if (!confirm("Deseja realmente remover este item?")) return;
-        const list = getItems().filter((x) => x.id !== id);
-        saveItems(list);
-        renderAll();
-      };
-    } else if (editMode) {
-      item.classList.add("ring-2", "ring-sky-500");
-      item.onclick = function () {
-        const id = ensureDynamic(this);
-        openEditFor(id);
-      };
-    } else if (sortMode) {
-      const id = item.getAttribute("data-id");
-      if (id) {
-        item.classList.add("ring-2", "ring-amber-500");
-        item.setAttribute("draggable", "true");
-      }
-    }
   });
 }
 
-// ===================== Edição existente =====================
 function openEditFor(id) {
   const items = getItems();
   const itm = items.find((x) => x.id === id);
@@ -440,9 +430,8 @@ function openEditFor(id) {
   document.getElementById("addItemForm").classList.remove("hidden");
 }
 
-// ===================== Drag & Drop (Reordenar) =====================
+// ---- Drag & Drop (reordenar) ----
 let dragSrc = null;
-
 function applySortability() {
   document.querySelectorAll(".dynamic-item").forEach((card) => {
     card.removeEventListener("dragstart", onDragStart);
@@ -454,96 +443,23 @@ function applySortability() {
       cont.removeEventListener("drop", onDrop);
     }
   });
-
-  if (!sortMode) return;
-
-  document.querySelectorAll(".dynamic-item").forEach((card) => {
-    card.addEventListener("dragstart", onDragStart);
-  });
-
-  ["#pasteis", "#doces", "#bebidas", "#porcoes .grid"].forEach(sel => {
-    const cont = document.querySelector(sel);
-    if (!cont) return;
-    cont.addEventListener("dragover", onDragOver);
-    cont.addEventListener("drop", onDrop);
-  });
 }
+function onDragStart(e) {}
+function onDragOver(e) {}
+function onDrop(e) {}
+function getDragAfterElement(container, y) { return null; }
+function persistOrderFromDOM() {}
 
-function onDragStart(e) {
-  dragSrc = e.currentTarget;
-  e.dataTransfer.effectAllowed = "move";
-  e.dataTransfer.setData("text/plain", dragSrc.getAttribute("data-id"));
-  dragSrc.classList.add("opacity-50");
-}
-function onDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = "move";
-}
-function onDrop(e) {
-  e.preventDefault();
+====================================================================== */
 
-  const destContainer = e.currentTarget;
-  const id = e.dataTransfer.getData("text/plain");
-  const dragged = document.querySelector(`.dynamic-item[data-id="${id}"]`);
-  if (!dragged || !destContainer) return;
-
-  const afterEl = getDragAfterElement(destContainer, e.clientY);
-  if (afterEl == null) {
-    destContainer.appendChild(dragged);
-  } else {
-    destContainer.insertBefore(dragged, afterEl);
-  }
-
-  if (dragSrc) dragSrc.classList.remove("opacity-50");
-  dragSrc = null;
-
-  persistOrderFromDOM();
-}
-
-function getDragAfterElement(container, y) {
-  const els = [...container.querySelectorAll(".dynamic-item:not(.opacity-50)")];
-  return els.reduce(
-    (closest, child) => {
-      const box = child.getBoundingClientRect();
-      const offset = y - (box.top + box.height / 2);
-      if (offset < 0 && offset > closest.offset) {
-        return { offset, element: child };
-      } else {
-        return closest;
-      }
-    },
-    { offset: Number.NEGATIVE_INFINITY, element: null }
-  ).element;
-}
-
-function persistOrderFromDOM() {
-  const items = getItems();
-  const byId = Object.fromEntries(items.map((x) => [x.id, x]));
-  const orderIds = [];
-
-  orderIds.push(
-    ...[...document.querySelectorAll("#pasteis .dynamic-item")].map((n) => n.getAttribute("data-id"))
-  );
-  orderIds.push(
-    ...[...document.querySelectorAll("#doces .dynamic-item")].map((n) => n.getAttribute("data-id"))
-  );
-  const porcoesGrid = document.querySelector("#porcoes .grid");
-  if (porcoesGrid) {
-    orderIds.push(
-      ...[...porcoesGrid.querySelectorAll(".dynamic-item")].map((n) => n.getAttribute("data-id"))
-    );
-  }
-  orderIds.push(
-    ...[...document.querySelectorAll("#bebidas .dynamic-item")].map((n) => n.getAttribute("data-id"))
-  );
-
-  const newItems = orderIds.map((id) => byId[id]).filter(Boolean);
-  items.forEach((it) => { if (!newItems.find((x) => x.id === it.id)) newItems.push(it); });
-  saveItems(newItems);
-}
+// ====== STUBS (no-ops) para manter compatibilidade sem Admin ======
+function applyModes() {}
+function applyModesToCards() {}
+function applySortability() {}
 
 // ===================== Init =====================
 document.addEventListener("DOMContentLoaded", function () {
+  // animação nos cards estáticos
   const menuItems = document.querySelectorAll(".menu-item:not(.dynamic-item)");
   menuItems.forEach((item, index) => {
     item.style.animationDelay = `${index * 0.05}s`;
@@ -551,7 +467,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   renderAll();
-  applyModes();
+  applyModes(); // no-op
 
   // Carrinho/WhatsApp inicial
   updateWaBadge();
@@ -559,10 +475,11 @@ document.addEventListener("DOMContentLoaded", function () {
   attachCartClickHandlers();
   refreshAllSelectedStates();
 
+  // Pode não existir; guardado
   const btnSaveWA = document.querySelector('[onclick="saveWhatsAppConfig()"]');
   if(btnSaveWA){ btnSaveWA.addEventListener("click", ()=>setTimeout(updateWhatsAppLinkFromCart, 50)); }
 
-  // Garante atualização do link na hora do clique
+  // Garante atualização do link na hora do clique (se existir)
   const waBtn = document.getElementById("whatsBtn");
   if (waBtn) {
     waBtn.addEventListener("click", (e)=>{
@@ -680,7 +597,9 @@ const qpRemove = document.getElementById("qpRemove");
 let qpContext = null; // {card, data, existing}
 
 function openQtyPopover(card){
-  const adminOpen = !document.getElementById("adminArea").classList.contains("hidden");
+  // Hardened: se #adminArea não existir, assume fechado (false)
+  const adminAreaEl = document.getElementById("adminArea");
+  const adminOpen = adminAreaEl ? !adminAreaEl.classList.contains("hidden") : false;
   if(adminOpen) return;
 
   const data = extractCardData(card);
@@ -803,7 +722,7 @@ document.addEventListener("click",(e)=>{
 window.addEventListener("scroll", ()=>{ if(qp.classList.contains("show") && qpContext){ positionPopoverNearCard(qpContext.card);} }, {passive:true});
 window.addEventListener("resize", ()=>{ if(qp.classList.contains("show") && qpContext){ positionPopoverNearCard(qpContext.card);} });
 
-// ---------------------- Integração com seus modos ----------------------
+// ---------------------- Integração com seus modos (sem admin) ----------------------
 function refreshCardSelectedState(card, cart=null){
   const c = cart || getCart();
   const data = extractCardData(card);
@@ -819,10 +738,8 @@ function attachCartClickHandlers(){
   document.querySelectorAll(".menu-item").forEach(card=>{
     if(card._cartHandler){ card.removeEventListener("click", card._cartHandler); card._cartHandler=null; }
 
-    // se em modo admin, não abre popover
-    if(localStorage.getItem("pd_mode_remove")==="1" || localStorage.getItem("pd_mode_edit")==="1" || localStorage.getItem("pd_mode_sort")==="1"){
-      return;
-    }
+    // Como admin foi removido, não precisamos bloquear por modo;
+    // ainda assim, se existir flags antigas no localStorage, ignoramos.
     const handler=(e)=>{
       if(e.target.closest("button, a, input, select, label")) return;
       openQtyPopover(card);
